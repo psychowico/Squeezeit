@@ -23,7 +23,7 @@ import re
 import hashlib
 import logging
 import yaml
-import zlib
+import gzip
 
 
 def compress(configfile):
@@ -246,7 +246,7 @@ def processbundle(configfile, config, bundlename, bundledata):
         writedata(configfile, config, config['output'], filename['min'], mindata)
 
         #Gzip
-        gzdata = zlib.compress(mindata.encode('utf-8'))
+        gzdata = gzip.compress(bytes(mindata, 'utf-8'))
         writedata(configfile, config, config['output'], filename['gz'], gzdata, True)
 
         #Save the sizes
@@ -288,7 +288,7 @@ def processbundle(configfile, config, bundlename, bundledata):
         writedata(configfile, config, config['output'], filename['min'], mindata)
 
         #Gzip
-        gzdata = zlib.compress(mindata.encode('utf-8'))
+        gzdata = gzip.compress(mindata.encode('utf-8'))
         writedata(configfile, config, config['output'], filename['gz'], gzdata, True)
 
         #Save the sizes
