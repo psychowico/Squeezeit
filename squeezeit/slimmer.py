@@ -7,10 +7,10 @@
  HTML, XHTML and CSS documents as strings.
  Ideally used from other modules used something like this::
 
-  >>> import slimmer
+  >>> from . import slimmer
   >>> code = open('file.html').read()
   >>> slimmed = slimmer.xhtml_slimmer(code)
-  >>> print len(code), len(slimmed)
+  >>> print(len(code), len(slimmed))
 
  You have to estimate yourself if you think it's worth using slimmer
  on your documents if you're running a dynamic setting such as a
@@ -18,54 +18,54 @@
  On my PC I slimmed a 1MB .html document in 2.2 seconds and saved
  100KB. Saved 31KB on a 110KB .css file in 0.063 seconds.
  And lastly, saved 17% in size in 0.016 seconds for www.python.org.
- 
+
 
 Changes::
  0.1.30     Nov 2009    Better at guessing HTML or XHTML
- 
+
  0.1.29     Nov 2008    New distutils release
- 
+
  0.1.28     Nov 2008    Added some tests that tests UTF-8 and EUC-JP HTML
- 
+
  0.1.27     Nov 2008    As a new distutils package
- 
+
  0.1.26     Oct 2007    Minor improvement to js_slimmer for 'var x = [...]'
-                        
- 0.1.25     Oct 2007    Slimming unicode text with hex colours like #FFFFFF 
+
+ 0.1.25     Oct 2007    Slimming unicode text with hex colours like #FFFFFF
                         caused an error relating to string.translate()
- 
+
  0.1.24     Sep 2007    <!--#include ... not removed in HTML slimmer
- 
+
  0.1.23     Apr 2007    Speedtest checks possibility of gzip
- 
+
  0.1.22     Jul 2006    Added function guessSyntax(code)
- 
+
  0.1.21     May 2006    Serious bug fix in _js_slimmer() with code like:
                           '''for (var e in somearray)'''
                         the result could be
                           '''for (vareinsomearray)'''
-                          
+
  0.1.20     Feb 2006    Incorporated new experimental --hardcore option
- 
+
  0.1.19     Feb 2006    Fixed bug in how js_slimmer() removes // comments
-    
+
  0.1.18     Jan 2006    Improved js_slimmer() floppy whitespace in parameter lists
-    
+
  0.1.17     Aug 2005    Fix in css_slimmer() for voice-family: hack (thanks Jens)
- 
+
  0.1.16     Jun 2005    Improved js_slimmer() for sloppy function definitions
-    
+
  0.1.15     Jun 2005    Improved js_slimmer() for sloppy if|else|else if statements
-    
+
  0.1.14     Apr 2005    Added unit test of Holly-hack for CSS
-                        
+
  0.1.13     Apr 2005    Improved js_slimmer() to make 'y = 123;y = document;' to instead
                         become 'y=123;y=document;'
 
  0.1.12     Mar 2005    Fixed css_slimmer() to put a linebreak before //-->
- 
+
  0.1.11     Feb 2005    Fixed js_slimmer() for some curly bracket endings
- 
+
  0.1.10     Jan 2005    (Major patch by Baruch Even)
                         - Fixed the -t option for testing, it didn't work, --test did work.
                         - Fixed a typo s/whatspace/whitespace/
@@ -78,26 +78,26 @@ Changes::
                         - Changed the test cases to fit
 
  0.1.9      Jan 2005    CLI interface can accept URLs
-                        
+
  0.1.8      Dec 2004    Added an option (UNQUOTE_HTML_ATTRIBUTES) to remove
                         quotes from HTML attributes. (default is off)
-    
+
  0.1.7      Dec 2004    Separate out from CheckoutableTemplates and __all__
                         variable fixed for js_slimmer.
- 
+
  0.1.6      Dec 2004    Care for MacIE5 CSS Hack (http://www.sam-i-am.com/work/sandbox/css/mac_ie5_hack.html)
-    
+
  0.1.5      Nov 2004    Some improvements to js_slimmer()
- 
+
  0.1.4      Nov 2004    Added first draft of js_slimmer()
- 
+
  0.1.3      Nov 2004    Much improved CLI functions
 
  0.1.2      Sep 2004    Added basic CLI functions (see run())
 
  0.1.1      Sep 2004    Major speed improvment by removing
                         the unquote_numerical feature.
-                        
+
  0.1.0      Sep 2004    First version numbering
 """
 
@@ -107,9 +107,9 @@ __all__=['acceptableSyntax','guessSyntax','slimmer','css_slimmer',
          '__version__']
 
 import re, os, sys, getopt
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 try:
-    from js_function_slimmer import slim as js_function_slimmer
+    from .js_function_slimmer import slim as js_function_slimmer
 except ImportError:
     js_function_slimmer = None
 
@@ -139,7 +139,7 @@ def acceptableSyntax(syntax):
         return syntax
     else:
         return None
-    
+
 some_javascript_code_regex = re.compile(
     'function\(\)\s*{|var \w|return false;|return true;|'\
     'function \w{2,15}\(|}\s*else if\s*\(')
@@ -168,7 +168,7 @@ def guessSyntax(code):
             if '/>' in code or '/ >' in code:
                 return XHTML
             return HTML
-            
+
     return None
 
 def slimmer(code, syntax=XHTML, hardcore=False):
@@ -185,20 +185,20 @@ def slimmer(code, syntax=XHTML, hardcore=False):
 try:
     import itertools
     def anyTrue(pred, seq):
-        return True in itertools.imap(pred,seq)
+        return True in map(pred,seq)
 except ImportError:
     def anyTrue(pred, seq):
         for e in seq:
             if pred(e):
                 return True
         return False
-    
-    
-    
+
+
+
 # CSS
 css_comments = re.compile(r'/\*.*?\*/', re.MULTILINE|re.DOTALL)
 hex_colour = re.compile(r'#\w{2}\w{2}\w{2}')
-    
+
 def _css_slimmer(css):
     """ remove repeating whitespace ( \t\n) """
 
@@ -212,7 +212,7 @@ def _css_slimmer(css):
             css = css.replace(css_comment, '')
         else:
             remove_next_comment = 1
-        
+
     css = re.sub(r'\s\s+', ' ', css) # >= 2 whitespace becomes one whitespace
     css = re.sub(r'\s+\n', '', css) # no whitespace before end of line
     # Remove space before and after certain chars
@@ -224,12 +224,12 @@ def _css_slimmer(css):
     css = re.sub(r';}', r'}', css) # no need for the ; before end of attributes
     css = re.sub(r'}//-->', r'}\n//-->', css)
     css = simplifyHexColours(css)
-    
+
     # voice-family hack. The declation: '''voice-family: "\"}\""''' requires
     # that extra space between the ':' and the first '"' which _css_slimmer()
     # removed. Put it back (http://real.issuetrackerproduct.com/0168)
     css = re.sub(r'voice-family:"\\"}\\""', r'voice-family: "\\"}\\""', css)
-    
+
     return css.strip()
 
 
@@ -238,10 +238,10 @@ f_IMD = re.I|re.MULTILINE|re.DOTALL
 f_MD = re.MULTILINE|re.DOTALL
 f_M = re.MULTILINE
 
-# the comment has to start with a space or a charater 
+# the comment has to start with a space or a charater
 # otherwise me might remove a SSI include which can look like this:
 #  <!--#include virtual="/include/myinclude.asp"-->
-html_comments_oneline = re.compile(r'<!--[\w\s].*?-->', re.I) 
+html_comments_oneline = re.compile(r'<!--[\w\s].*?-->', re.I)
 
 html_inline_css = re.compile(r'<style.*?>.*?</style>', f_IMD)
 html_inline_js = re.compile(r'<script.*?>.*?</script>', f_IMD)
@@ -261,20 +261,20 @@ def _html_slimmer(html, xml=0):
     # 1. optimize inline CSS
     for styletag in html_inline_css.findall(html):
         html = html.replace(styletag, css_slimmer(styletag))
-        
+
     # 2. optimize inline Javascript
     for scripttag in html_inline_js.findall(html):
         html = html.replace(scripttag, js_slimmer(scripttag))
-        
+
     # 2. Remove excessive whitespace between tags
     html = re.sub(r'>\s+<','><', html)
-    
+
     # 3. Remove oneline comments
     html = html_comments_oneline.sub('', html)
-    
+
     # 4. In every tag, remove quotes on numerical attributes and all
     # excessive whitespace
-    
+
     ew1 = excess_whitespace1 # shortcut
     ew6 = excess_whitespace6 # shortcut
     ew4 = excess_whitespace4 # shortcut
@@ -284,24 +284,24 @@ def _html_slimmer(html, xml=0):
         if tag.startswith('<!') or tag.find('</')>-1:
             continue
         original = tag
-        
+
         # 4b. remove excess whitespace inside the tag
         tag= excess_whitespace2.sub('">', tag)
         tag= excess_whitespace3.sub("'>", tag)
-        
+
         for each in ew1.findall(tag)+ew6.findall(tag):
             tag = tag.replace(each, excess_whitespace.sub(' ',each))
         for each in ew4.findall(tag):
             tag = tag.replace(each, each[0]+' '+each[1:].lstrip())
-        
+
         # 4c. remove quotes
         if not xml and UNQUOTE_HTML_ATTRIBUTES:
             tag= quotes_in_tag.sub(r'\1=\2', tag)
-        
+
         # has the tag been improved?
         if original != tag:
             html = html.replace(original, tag)
-    
+
     return html.strip()
 
 
@@ -310,7 +310,7 @@ def _xhtml_slimmer(xhtml):
     # currently not difference
     return _html_slimmer(xhtml, xml=1)
 
-    
+
 excess_whitespace_js = re.compile('^\s+(\S)',re.MULTILINE)
 excess_whitespace_js2 = re.compile('(\S+);\s+(\S+)', re.MULTILINE)
 whitespaced_func_def = re.compile('(function)\s+(\S+\(.*?\))\s*{\s*(\S+)', f_IMD)
@@ -333,16 +333,16 @@ closing_curly_brackets = re.compile(r'\s*}', re.MULTILINE)
 opening_curly_brackets = re.compile(r'{\s*', re.MULTILINE)
 
 def _js_slimmer(js, slim_functions=False):
-    
+
     # 1. remove all whitespace starting every line
     js = excess_whitespace_js.sub(r'\1',js)
-    
+
     # 2. Remove all /* multiline comments  */
     js = js_multiline_comments.sub('',js)
 
     # 3. // style comments
     def _reject_slashslash_comment(match):
-        
+
         if match.group().find('-->')==-1:
             return ''
         else:
@@ -359,26 +359,26 @@ def _js_slimmer(js, slim_functions=False):
     """
 
     js = js_comment_start.sub(r'<!--\n\3', js)
-    
+
     # 3. excessive whitespace after semicolons
     js = excess_whitespace_js2.sub(r'\1;\2', js)
-    
+
     # 4. functions defined with lots of whitespace
     js = whitespaced_func_def.sub(r'\1 \2{\3', js)
     js = whitespaced_func_def2.sub(r'function(){\1', js)
-    
+
     # 5. control statements with lots of whitespace
     js = whitespaced_controls.sub(r'\1(\2){\3', js)
-    
+
     # 6. control statements without params with lots of whitespace
-    js = single_whitespaced_controls.sub(r'\1{\2', js)    
-    
+    js = single_whitespaced_controls.sub(r'\1{\2', js)
+
     # 7. convert '(page == "foo")' to '(page=="foo")'
     js = sloppy_conditionals.sub(r'(\1\2\3)', js)
 
     # 8. convert '} else if {' to '}else if{'
     js = sloppy_ifs.sub(r'\1\2', js)
-    
+
     # 9. convert 'var x = foo' to 'var x=foo'
     js = sloppy_declarations.sub(r'var \1=\2',js)
     js = sloppy_simple_declarations.sub(r'\1=\2', js)
@@ -388,23 +388,23 @@ def _js_slimmer(js, slim_functions=False):
     js = closing_curly_brackets.sub('}', js)
 
     # 11. Neater parameter lists
-    
+
     #js = sloppy_parameters.sub(lambda m:m.group().replace(' ',''), js)
     def param_list_fixer(m):
         whole = m.group()
         params = m.groups()[0]
-        return whole.replace(params, 
+        return whole.replace(params,
                  ','.join([x.strip() for x in params.split(',')]))
     js = sloppy_parameters.sub(param_list_fixer, js)
-    
+
     # 12. sloppy increments
     js = sloppy_increments.sub(r'\1\2\3', js)
-    
+
     if slim_functions and js_function_slimmer:
         js = js_function_slimmer(js)
-    
+
     return js.strip()
-    
+
 
 ## ----- Some fancier names
 ##
@@ -430,7 +430,7 @@ def uniqify(all):
     u = {}
     for each in all:
         u[each]=1
-    return u.keys()
+    return list(u.keys())
 
 def simplifyHexColours(text):
     """ Replace all colour declarations where pairs repeat.
@@ -442,44 +442,44 @@ def simplifyHexColours(text):
     for e in uniqify(all_hex_encodings):
         if e[1]==e[2] and e[3]==e[4] and e[5]==e[6]:
             colour_replacements[e] = '#'+e[1]+e[3]+e[5]
-    for k, v in colour_replacements.items():
+    for k, v in list(colour_replacements.items()):
         text = text.replace(k, v)
     return text
 
 
 def __grr():
-    print "Usage: python slimmer.py /path/to/input.html [xhtml|html|css|js] /path/to/output.html"
+    print("Usage: python slimmer.py /path/to/input.html [xhtml|html|css|js] /path/to/output.html")
 
 def _pingable(url):
     try:
-        urllib2.urlopen(url)
+        urllib.request.urlopen(url)
         return 1
     except:
         return 0
-    
+
 def _is_openable_url(path_or_url):
     # looks like a URL?
     if path_or_url.lower().startswith('http'):
         return _pingable(path_or_url)
     else:
-        return 0    
-    
+        return 0
+
 def __guess_syntax(filepath):
     lines = []
-    
+
     if os.path.isfile(filepath) or _is_openable_url(filepath):
         if filepath.lower().endswith('.css'):
             return 'css'
         elif filepath.lower().endswith('.js'):
             return 'js'
-        
+
         if os.path.isfile(filepath):
             f=open(filepath)
         else:
-            f=urllib2.urlopen(filepath)
-            
+            f=urllib.request.urlopen(filepath)
+
         line = f.readline()
-        c = 0 
+        c = 0
         while len(lines) < 50 and line is not None:
             if line.strip():
                 lines.append(line)
@@ -487,9 +487,9 @@ def __guess_syntax(filepath):
             c += 1
             if c>100:
                 break # paranoid safety
-            
+
         f.close()
-            
+
         lines_list = lines
         lines = '\n'.join([x for x in lines_list if x.find('!DOCTYPE')>-1])
         if lines.find('HTML 4.0')>-1:
@@ -502,12 +502,12 @@ def __guess_syntax(filepath):
             lines = '\n'.join(lines_list)
             if lines.lower().find('<html') > -1:
                 return 'html'
-        
+
         if filepath.lower().endswith('.html') or \
           filepath.lower().endswith('.htm'):
             return 'html'
-        
-    
+
+
     return None
 
 
@@ -522,42 +522,42 @@ Options:
     --version          Prints version and exits
     --hardcore         Tries really hard but potentially slower
     -h, --help         Prints this message
-    
+
     If you don't specify the content type after the input filename,
     the program will try to guess it by opening the file and looking
     at the file extension.
-    
+
     Examples:
         $ python slimmer.py index.html XHTML --output=index.optimized.html
-        $ python slimmer.py --test screen.css 
+        $ python slimmer.py --test screen.css
 """
-                                            
-    
+
+
 def __showversion():
-    print __version__
-    
+    print(__version__)
+
 def __usage():
-    print usage
+    print(usage)
 
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
-        
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "ho:vt", 
+            opts, args = getopt.getopt(argv[1:], "ho:vt",
                            ["help", "output=", "version", "test", "hardcore"])
-        except getopt.error, msg:
+        except getopt.error as msg:
             raise Usage(msg)
         # more code, unchanged
-    except Usage, err:
-        print >>sys.stderr, err.msg
-        print >>sys.stderr, "for help use --help"
+    except Usage as err:
+        print(err.msg, file=sys.stderr)
+        print("for help use --help", file=sys.stderr)
         return 2
-    
+
     outputfile = None
     speedtest = 0
     hardcore = False
@@ -575,11 +575,11 @@ def main(argv=None):
             speedtest = 1
         elif o == '--hardcore':
             hardcore = True
-        
+
     if not args:
         __usage()
         return 4
-    
+
     syntax = None
     inputfile = None
     otherargs = []
@@ -597,34 +597,34 @@ def main(argv=None):
 
     if inputfile and syntax is None:
         syntax = __guess_syntax(inputfile)
-    
+
     if inputfile is None:
-        print >>sys.stderr, "No input file"
-        print >>sys.stderr, "for help use --help"
-        return 2        
-        
-    if not acceptableSyntax(syntax):
-        print >>sys.stderr, "Unrecognized syntax"
-        print >>sys.stderr, "for help use --help"
-        return 2
-    
-    if otherargs:
-        print >>sys.stderr, "Unrecognized arguments %r"%otherargs
-        print >>sys.stderr, "for help use --help"
+        print("No input file", file=sys.stderr)
+        print("for help use --help", file=sys.stderr)
         return 2
 
-    
+    if not acceptableSyntax(syntax):
+        print("Unrecognized syntax", file=sys.stderr)
+        print("for help use --help", file=sys.stderr)
+        return 2
+
+    if otherargs:
+        print("Unrecognized arguments %r"%otherargs, file=sys.stderr)
+        print("for help use --help", file=sys.stderr)
+        return 2
+
+
 
     run(inputfile, syntax, speedtest, outputfile, hardcore=hardcore)
-    
+
     return 0
 
 
 from time import time
 
 def _gzipText(content):
-    import cStringIO,gzip
-    zbuf = cStringIO.StringIO()
+    import io,gzip
+    zbuf = io.StringIO()
     zfile = gzip.GzipFile(None, 'wb', 9, zbuf)
     zfile.write(content)
     zfile.close()
@@ -634,13 +634,13 @@ def run(inputfile, syntax, speedtest, outputfile, hardcore=False):
     if os.path.isfile(inputfile):
         contents = open(inputfile).read()
     else:
-        contents = urllib2.urlopen(inputfile).read()
+        contents = urllib.request.urlopen(inputfile).read()
     t0=time()
     slimmed = slimmer(contents, syntax, hardcore=hardcore)
     t=time()-t0
-    
-    
-        
+
+
+
     if speedtest:
         before = len(contents)
         after = len(slimmed)
@@ -655,22 +655,20 @@ def run(inputfile, syntax, speedtest, outputfile, hardcore=False):
         size_difference = before-after
         if size_difference > 10000:
             size_difference = "%s (%sK)"%(size_difference, size_difference/1024)
-        print "Took %s seconds"%round(t, 3)
-        print "Bytes before: %s"%size_before
-        print "Bytes after:  %s"%size_after
-        print "Bytes after zlib: %s"%after_zlibbed
-        print "Bytes after gzip: %s"%after_gzip
-        print "Bytes saved:  %s "%size_difference,
-        print "(%s%% of original size)"%(100*round(after/float(before), 2))
-        
+        print("Took %s seconds"%round(t, 3))
+        print("Bytes before: %s"%size_before)
+        print("Bytes after:  %s"%size_after)
+        print("Bytes after zlib: %s"%after_zlibbed)
+        print("Bytes after gzip: %s"%after_gzip)
+        print("Bytes saved:  %s "%size_difference, end=' ')
+        print("(%s%% of original size)"%(100*round(after/float(before), 2)))
+
     elif outputfile:
         open(outputfile, 'w').write(slimmed)
-        
+
     else:
-        print >>sys.stdout, slimmed
-    
-    
+        print(slimmed, file=sys.stdout)
+
+
 if __name__=='__main__':
     sys.exit(main())
-
-
